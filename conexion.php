@@ -40,3 +40,28 @@ if ($ssl === 'true') {
 
 // Aceptar ñ, tildes, emojis, etc.
 mysqli_set_charset($conexion, "utf8mb4");
+
+// =========================================================================
+// MIGRACIÓN AUTOSANADORA (Creación automática de tablas si no existen)
+// =========================================================================
+try {
+    // 1. Crear tabla carrito si no existe
+    $conexion->query("CREATE TABLE IF NOT EXISTS `carrito` (
+        `id_carrito`  INT AUTO_INCREMENT PRIMARY KEY,
+        `id_usuario`  INT,
+        `id_producto` INT NOT NULL,
+        `cantidad`    INT NOT NULL DEFAULT 1,
+        INDEX `idx_carrito_usuario` (`id_usuario`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+    // 2. Crear tabla favoritos si no existe
+    $conexion->query("CREATE TABLE IF NOT EXISTS `favoritos` (
+        `id_favorito` INT AUTO_INCREMENT PRIMARY KEY,
+        `id_usuario`  INT NOT NULL,
+        `id_producto` INT NOT NULL,
+        UNIQUE KEY `uq_fav` (`id_usuario`, `id_producto`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+} catch (Throwable $e) {
+    // Silencioso: si el usuario de la base de datos no tiene permisos de CREATE,
+    // evitamos colapsar la conexión y permitimos que la página intente cargar.
+}

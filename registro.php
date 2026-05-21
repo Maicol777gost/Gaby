@@ -40,35 +40,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['tipo_entrada'] = 'registro'; // IMPORTANTE: Señal de registro
                     $_SESSION['rol'] = 'cliente'; // FIX: Asignar el rol al registrarse
                     
-                    // Migrar carrito de sesión (invitado) a la base de datos al registrarse
-                    if (isset($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
-                        foreach ($_SESSION['carrito'] as $id_prod => $item) {
-                            $id_prod = (int)$id_prod;
-                            $cant = (int)$item['cantidad'];
-                            if ($cant > 0) {
-                                $ins = $conexion->prepare("INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, ?)");
-                                $ins->bind_param("iii", $_SESSION['usuario_id'], $id_prod, $cant);
-                                $ins->execute();
-                                $ins->close();
+                    // Migrar carrito de sesión (invitado) a la base de datos al registrarse (defensivo)
+                    try {
+                        if (isset($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
+                            foreach ($_SESSION['carrito'] as $id_prod => $item) {
+                                $id_prod = (int)$id_prod;
+                                $cant = (int)$item['cantidad'];
+                                if ($cant > 0) {
+                                    $ins = $conexion->prepare("INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, ?)");
+                                    $ins->bind_param("iii", $_SESSION['usuario_id'], $id_prod, $cant);
+                                    $ins->execute();
+                                    $ins->close();
+                                }
                             }
                         }
-                    }
 
-                    // Cargar el carrito completo consolidado desde la base de datos a la sesión
-                    $_SESSION['carrito'] = [];
-                    $load_cart = $conexion->prepare("SELECT c.id_producto, c.cantidad, p.nombre_producto, p.precio, p.imagen FROM carrito c JOIN productos p ON c.id_producto = p.id_producto WHERE c.id_usuario = ?");
-                    $load_cart->bind_param("i", $_SESSION['usuario_id']);
-                    $load_cart->execute();
-                    $res_load = $load_cart->get_result();
-                    while ($row = $res_load->fetch_assoc()) {
-                        $_SESSION['carrito'][$row['id_producto']] = [
-                            "nombre" => $row['nombre_producto'],
-                            "precio" => $row['precio'],
-                            "imagen" => $row['imagen'],
-                            "cantidad" => $row['cantidad']
-                        ];
+                        // Cargar el carrito completo consolidado desde la base de datos a la sesión
+                        $_SESSION['carrito'] = [];
+                        $load_cart = $conexion->prepare("SELECT c.id_producto, c.cantidad, p.nombre_producto, p.precio, p.imagen FROM carrito c JOIN productos p ON c.id_producto = p.id_producto WHERE c.id_usuario = ?");
+                        $load_cart->bind_param("i", $_SESSION['usuario_id']);
+                        $load_cart->execute();
+                        $res_load = $load_cart->get_result();
+                        while ($row = $res_load->fetch_assoc()) {
+                            $_SESSION['carrito'][$row['id_producto']] = [
+                                "nombre" => $row['nombre_producto'],
+                                "precio" => $row['precio'],
+                                "imagen" => $row['imagen'],
+                                "cantidad" => $row['cantidad']
+                            ];
+                        }
+                        $load_cart->close();
+                    } catch (Throwable $e) {
+                        // En caso de que la tabla 'carrito' no exista o falle, dejamos el carrito en sesión
+                        // y evitamos tumbar el registro exitoso.
                     }
-                    $load_cart->close();
 
                     header("Location: index.php");
                     exit();
