@@ -9,8 +9,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $contrasena = $_POST['contrasena'] ?? '';
 
     if (!$conexion->connect_error) {
-        // 1. Consulta preparada
-        $stmt = $conexion->prepare("SELECT id_usuario, nombre, contraseña, rol FROM usuarios WHERE email = ? LIMIT 1");
+        // 1. Consulta preparada (usamos alias contrasena para evitar problemas con la ñ)
+        $stmt = $conexion->prepare("SELECT id_usuario, nombre, contraseña AS contrasena, rol FROM usuarios WHERE email = ? LIMIT 1");
 
         if ($stmt) {
             $stmt->bind_param("s", $email);
@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $usuario = $resultado->fetch_assoc();
 
                 // 2. VALIDACIÓN SEGURA con password_verify
-                if (password_verify($contrasena, $usuario['contraseña'])) {
+                if (password_verify($contrasena, $usuario['contrasena'])) {
 
                     // DATOS DE SESIÓN
                     $_SESSION['usuario_id'] = $usuario['id_usuario'];
