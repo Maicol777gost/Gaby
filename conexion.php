@@ -45,6 +45,16 @@ mysqli_set_charset($conexion, "utf8mb4");
 // MIGRACIÓN AUTOSANADORA (Creación automática de tablas si no existen)
 // =========================================================================
 try {
+    // 0. Crear tabla usuarios si no existe (con id_usuario AUTO_INCREMENT)
+    $conexion->query("CREATE TABLE IF NOT EXISTS `usuarios` (
+        `id_usuario`  INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `nombre`      VARCHAR(150) NOT NULL,
+        `email`       VARCHAR(200) NOT NULL UNIQUE,
+        `contraseña`  VARCHAR(255) NOT NULL,
+        `rol`         ENUM('cliente','admin') NOT NULL DEFAULT 'cliente',
+        `created_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
     // 1. Crear tabla carrito si no existe
     $conexion->query("CREATE TABLE IF NOT EXISTS `carrito` (
         `id_carrito`  INT AUTO_INCREMENT PRIMARY KEY,
