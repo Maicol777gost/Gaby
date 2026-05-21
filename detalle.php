@@ -190,7 +190,7 @@ $solo_lectura = isset($_SESSION['usuario_id']) ? "readonly" : "";
         <div class="header-icons">
              <?php if (isset($_SESSION['usuario_id'])): ?>
                 <div class="user-logged-container" style="display: flex; align-items: center; gap: 12px;">
-
+                    <a href="<?php echo (($_SESSION['rol'] ?? '') === 'admin') ? 'admi/dashboard.php' : 'dashboard.php'; ?>" title="Mi Panel">
                         <i class="fa-solid fa-circle-user header-icon-size" style="color: white;"></i>
                     </a>
                     <a href="logout.php" title="Cerrar Sesión">

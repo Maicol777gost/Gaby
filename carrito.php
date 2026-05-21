@@ -46,34 +46,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
             }
 
-            // Sincronizar con la BD usando prepared statements
+            // Sincronizar con la BD usando prepared statements (solo si el usuario está logueado)
             if ($id_usuario) {
                 $chk = $conexion->prepare("SELECT id_carrito FROM carrito WHERE id_producto = ? AND id_usuario = ?");
                 $chk->bind_param("ii", $id, $id_usuario);
-            } else {
-                $chk = $conexion->prepare("SELECT id_carrito FROM carrito WHERE id_producto = ? AND id_usuario IS NULL");
-                $chk->bind_param("i", $id);
-            }
-            $chk->execute();
-            $chk->store_result();
+                $chk->execute();
+                $chk->store_result();
 
-            if ($chk->num_rows > 0) {
-                $chk->close();
-                if ($id_usuario) {
+                if ($chk->num_rows > 0) {
+                    $chk->close();
                     $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad + 1 WHERE id_producto = ? AND id_usuario = ?");
                     $upd->bind_param("ii", $id, $id_usuario);
+                    $upd->execute();
+                    $upd->close();
                 } else {
-                    $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad + 1 WHERE id_producto = ? AND id_usuario IS NULL");
-                    $upd->bind_param("i", $id);
+                    $chk->close();
+                    $ins = $conexion->prepare("INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, 1)");
+                    $ins->bind_param("ii", $id_usuario, $id);
+                    $ins->execute();
+                    $ins->close();
                 }
-                $upd->execute();
-                $upd->close();
-            } else {
-                $chk->close();
-                $ins = $conexion->prepare("INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, 1)");
-                $ins->bind_param("ii", $id_usuario, $id);
-                $ins->execute();
-                $ins->close();
             }
         }
         echo "ok";
@@ -92,11 +84,9 @@ if ($accion == "comprar") {
     if ($id_usuario) {
         $del = $conexion->prepare("DELETE FROM carrito WHERE id_usuario = ?");
         $del->bind_param("i", $id_usuario);
-    } else {
-        $del = $conexion->prepare("DELETE FROM carrito WHERE id_usuario IS NULL");
+        $del->execute();
+        $del->close();
     }
-    $del->execute();
-    $del->close();
 
     echo "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Redireccionando...</title></head><body>";
     echo "<script>alert('¡Gracias por tu compra en D\\' Fiordaliza Style! 🛒\\nTu pedido ha sido procesado con éxito.'); window.location='index.php';</script>";
@@ -109,12 +99,9 @@ if ($accion == "eliminar" && $id > 0) {
     if ($id_usuario) {
         $del = $conexion->prepare("DELETE FROM carrito WHERE id_producto = ? AND id_usuario = ?");
         $del->bind_param("ii", $id, $id_usuario);
-    } else {
-        $del = $conexion->prepare("DELETE FROM carrito WHERE id_producto = ? AND id_usuario IS NULL");
-        $del->bind_param("i", $id);
+        $del->execute();
+        $del->close();
     }
-    $del->execute();
-    $del->close();
     header("Location: carrito.php");
     exit;
 }
@@ -124,12 +111,9 @@ if ($accion == "sumar" && $id > 0) {
     if ($id_usuario) {
         $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad + 1 WHERE id_producto = ? AND id_usuario = ?");
         $upd->bind_param("ii", $id, $id_usuario);
-    } else {
-        $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad + 1 WHERE id_producto = ? AND id_usuario IS NULL");
-        $upd->bind_param("i", $id);
+        $upd->execute();
+        $upd->close();
     }
-    $upd->execute();
-    $upd->close();
     header("Location: carrito.php");
     exit;
 }
@@ -142,14 +126,12 @@ if ($accion == "restar" && $id > 0) {
     if ($id_usuario) {
         $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad - 1 WHERE id_producto = ? AND id_usuario = ?");
         $upd->bind_param("ii", $id, $id_usuario);
-    } else {
-        $upd = $conexion->prepare("UPDATE carrito SET cantidad = cantidad - 1 WHERE id_producto = ? AND id_usuario IS NULL");
-        $upd->bind_param("i", $id);
+        $upd->execute();
+        $upd->close();
+
+        // Limpiar registros con cantidad <= 0
+        $conexion->query("DELETE FROM carrito WHERE cantidad <= 0 AND id_usuario = $id_usuario");
     }
-    $upd->execute();
-    $upd->close();
-    // Limpiar registros con cantidad <= 0
-    $conexion->query("DELETE FROM carrito WHERE cantidad <= 0");
     header("Location: carrito.php");
     exit;
 }
@@ -159,11 +141,9 @@ if ($accion == "vaciar") {
     if ($id_usuario) {
         $del = $conexion->prepare("DELETE FROM carrito WHERE id_usuario = ?");
         $del->bind_param("i", $id_usuario);
-    } else {
-        $del = $conexion->prepare("DELETE FROM carrito WHERE id_usuario IS NULL");
+        $del->execute();
+        $del->close();
     }
-    $del->execute();
-    $del->close();
     header("Location: carrito.php");
     exit;
 }
@@ -602,7 +582,7 @@ main {
         <div class="header-icons">
              <?php if (isset($_SESSION['usuario_id'])): ?>
                 <div class="user-logged-container" style="display: flex; align-items: center; gap: 12px;">
-
+                    <a href="<?php echo (($_SESSION['rol'] ?? '') === 'admin') ? 'admi/dashboard.php' : 'dashboard.php'; ?>" title="Mi Panel">
                         <i class="fa-solid fa-circle-user header-icon-size" style="color: white;"></i>
                     </a>
                     <a href="logout.php" title="Cerrar Sesión">

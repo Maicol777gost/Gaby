@@ -7,15 +7,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['accion']) && $_POST['accion'] === 'cambiar_rol') {
         $id = $_POST['id_usuario'];
         $rol = $_POST['rol'];
-        // Evitar que el admin principal (1) se quite sus permisos
-        if ($id != 1) {
+        // Evitar que el admin actual conectado se quite sus permisos
+        if ($id != $_SESSION['usuario_id']) {
             $stmt = $conexion->prepare("UPDATE usuarios SET rol = ? WHERE id_usuario = ?");
             $stmt->bind_param("si", $rol, $id);
             $stmt->execute();
         }
     } elseif (isset($_POST['accion']) && $_POST['accion'] === 'borrar') {
         $id = $_POST['id_usuario'];
-        if ($id != 1) {
+        // Evitar que el admin actual conectado se elimine a sí mismo
+        if ($id != $_SESSION['usuario_id']) {
             $stmt = $conexion->prepare("DELETE FROM usuarios WHERE id_usuario = ?");
             $stmt->bind_param("i", $id);
             $stmt->execute();
@@ -140,13 +141,13 @@ $resultado = $conexion->query("SELECT id_usuario, nombre, email, rol FROM usuari
                                         <form method="POST" style="display: flex; gap: 5px;">
                                             <input type="hidden" name="accion" value="cambiar_rol">
                                             <input type="hidden" name="id_usuario" value="<?php echo $row['id_usuario']; ?>">
-                                            <select name="rol" class="form-select" <?php echo ($row['id_usuario'] == 1) ? 'disabled' : ''; ?>>
+                                            <select name="rol" class="form-select" <?php echo ($row['id_usuario'] == $_SESSION['usuario_id']) ? 'disabled' : ''; ?>>
                                                 <option value="cliente" <?php if($row['rol']=='cliente') echo 'selected'; ?>>Cliente</option>
                                                 <option value="admin" <?php if($row['rol']=='admin') echo 'selected'; ?>>Admin</option>
                                             </select>
-                                            <button type="submit" class="btn-update" <?php echo ($row['id_usuario'] == 1) ? 'disabled style="opacity:0.5;"' : ''; ?>><i class="fa-solid fa-check"></i></button>
+                                            <button type="submit" class="btn-update" <?php echo ($row['id_usuario'] == $_SESSION['usuario_id']) ? 'disabled style="opacity:0.5;"' : ''; ?>><i class="fa-solid fa-check"></i></button>
                                         </form>
-                                        <?php if ($row['id_usuario'] != 1): ?>
+                                        <?php if ($row['id_usuario'] != $_SESSION['usuario_id']): ?>
                                             <form method="POST" onsubmit="return confirm('¿Eliminar permanentemente a este usuario?');">
                                                 <input type="hidden" name="accion" value="borrar">
                                                 <input type="hidden" name="id_usuario" value="<?php echo $row['id_usuario']; ?>">

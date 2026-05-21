@@ -8,16 +8,19 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    // 1. Conectar sin seleccionar BD, para poder crearla si no existe
-    $db = new mysqli("localhost", "root", "");
-    $db->query("CREATE DATABASE IF NOT EXISTS `fiordaliza` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $db->select_db("fiordaliza");
-    $db->set_charset("utf8mb4");
+    // 1. Usar la conexión dinámica configurada en conexion.php
+    require 'conexion.php';
+    $db = $conexion;
 
     // 2. Ejecutar el schema SQL completo
     $sql_file = __DIR__ . '/basededatos/fiordaliza_schema.sql';
     if (file_exists($sql_file)) {
         $sql = file_get_contents($sql_file);
+        
+        // Remover CREATE DATABASE y USE para evitar fallos de permisos en hostings compartidos / Render
+        $sql = preg_replace('/CREATE DATABASE IF NOT EXISTS\s+`?[a-zA-Z0-9_-]+`?[^;]*;/i', '', $sql);
+        $sql = preg_replace('/USE\s+`?[a-zA-Z0-9_-]+`?[^;]*;/i', '', $sql);
+        
         // Ejecutar sentencias separadas
         $db->multi_query($sql);
         // Consumir todos los resultados para no bloquear

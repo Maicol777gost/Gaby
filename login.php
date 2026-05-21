@@ -32,6 +32,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['mensaje_bienvenida'] = true;
                     $_SESSION['tipo_entrada'] = 'login'; 
 
+                    // Migrar carrito de sesión (invitado) a la base de datos al iniciar sesión
+                    if (isset($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
+                        foreach ($_SESSION['carrito'] as $id_prod => $item) {
+                            $id_prod = (int)$id_prod;
+                            $cant = (int)$item['cantidad'];
+                            if ($cant > 0) {
+                                // Verificar si el producto ya existe en el carrito del usuario logueado en la BD
+                                $chk = $conexion->prepare("SELECT id_carrito, cantidad FROM carrito WHERE id_producto = ? AND id_usuario = ?");
+                                $chk->bind_param("ii", $id_prod, $usuario['id_usuario']);
+                                $chk->execute();
+                                $res_chk = $chk->get_result();
+                                if ($res_chk->num_rows > 0) {
+                                    $row_chk = $res_chk->fetch_assoc();
+                                    $nueva_cant = $row_chk['cantidad'] + $cant;
+                                    $upd = $conexion->prepare("UPDATE carrito SET cantidad = ? WHERE id_producto = ? AND id_usuario = ?");
+                                    $upd->bind_param("iii", $nueva_cant, $id_prod, $usuario['id_usuario']);
+                                    $upd->execute();
+                                    $upd->close();
+                                } else {
+                                    $ins = $conexion->prepare("INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, ?)");
+                                    $ins->bind_param("iii", $usuario['id_usuario'], $id_prod, $cant);
+                                    $ins->execute();
+                                    $ins->close();
+                                }
+                                $chk->close();
+                            }
+                        }
+                    }
+
+                    // Cargar el carrito completo consolidado desde la base de datos a la sesión
+                    $_SESSION['carrito'] = [];
+                    $load_cart = $conexion->prepare("SELECT c.id_producto, c.cantidad, p.nombre_producto, p.precio, p.imagen FROM carrito c JOIN productos p ON c.id_producto = p.id_producto WHERE c.id_usuario = ?");
+                    $load_cart->bind_param("i", $usuario['id_usuario']);
+                    $load_cart->execute();
+                    $res_load = $load_cart->get_result();
+                    while ($row = $res_load->fetch_assoc()) {
+                        $_SESSION['carrito'][$row['id_producto']] = [
+                            "nombre" => $row['nombre_producto'],
+                            "precio" => $row['precio'],
+                            "imagen" => $row['imagen'],
+                            "cantidad" => $row['cantidad']
+                        ];
+                    }
+                    $load_cart->close();
+
                     // Redirección por rol
                     if ($_SESSION['rol'] === 'admin') {
                         header("Location: admi/dashboard.php");

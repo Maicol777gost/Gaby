@@ -57,6 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $resultado = $conexion->query("SELECT p.*, c.nombre_categoria FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.id_producto DESC");
+
+// Obtener categorías para el selector del formulario
+$categorias_res = $conexion->query("SELECT id_categoria, nombre_categoria FROM categorias ORDER BY id_categoria ASC");
+$categorias = [];
+if ($categorias_res) {
+    while ($cat = $categorias_res->fetch_assoc()) {
+        $categorias[] = $cat;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -202,7 +211,15 @@ $resultado = $conexion->query("SELECT p.*, c.nombre_categoria FROM productos p L
                 <div class="form-group"><label>Descripción</label><textarea name="descripcion" id="form_descripcion" class="form-control" rows="3"></textarea></div>
                 <div style="display: flex; gap: 10px;">
                     <div class="form-group" style="flex:1;"><label>Precio</label><input type="number" step="0.01" name="precio" id="form_precio" class="form-control" required></div>
-                    <div class="form-group" style="flex:1;"><label>Categoría</label><input type="number" name="id_categoria" id="form_categoria" class="form-control" required></div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Categoría</label>
+                        <select name="id_categoria" id="form_categoria" class="form-control" required>
+                            <option value="">Seleccionar...</option>
+                            <?php foreach ($categorias as $cat): ?>
+                                <option value="<?php echo $cat['id_categoria']; ?>"><?php echo htmlspecialchars($cat['nombre_categoria']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group"><label>Imagen</label><input type="file" name="imagen" class="form-control"></div>
                 <div style="text-align: right;"><button type="submit" class="btn btn-primary">Guardar</button></div>

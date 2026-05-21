@@ -17,9 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
 // OBTENER PEDIDOS CON DATOS DE USUARIO Y DIRECCIÓN (Usando subconsultas para evitar error ONLY_FULL_GROUP_BY)
 $sql = "SELECT p.id_pedido, p.fecha_pedido, p.total, p.estado, u.nombre, u.email,
-               (SELECT d.telefono_contacto FROM direcciones d WHERE d.id_usuario = p.id_usuario LIMIT 1) AS telefono_contacto,
-               (SELECT d.ciudad FROM direcciones d WHERE d.id_usuario = p.id_usuario LIMIT 1) AS ciudad,
-               (SELECT d.calle_numero FROM direcciones d WHERE d.id_usuario = p.id_usuario LIMIT 1) AS calle_numero
+               (SELECT d.telefono_contacto FROM direcciones d WHERE d.id_usuario = p.id_usuario ORDER BY d.id_direccion DESC LIMIT 1) AS telefono_contacto,
+               (SELECT d.ciudad FROM direcciones d WHERE d.id_usuario = p.id_usuario ORDER BY d.id_direccion DESC LIMIT 1) AS ciudad,
+               (SELECT d.calle_numero FROM direcciones d WHERE d.id_usuario = p.id_usuario ORDER BY d.id_direccion DESC LIMIT 1) AS calle_numero
         FROM pedidos p 
         LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario 
         ORDER BY p.fecha_pedido DESC";

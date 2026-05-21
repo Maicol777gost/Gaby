@@ -468,7 +468,7 @@ if (isset($_SESSION['usuario_id'])) {
         </div>
     </div>
 <?php endif; ?>
-
+<?php if (!$mostrar_exito): ?>
 <div class="checkout-layout">
     <div class="form-side" style="position: relative;">
         <a href="javascript:history.back()" class="btn-volver-arriba" title="Volver atrás">
@@ -531,6 +531,7 @@ if (isset($_SESSION['usuario_id'])) {
         </p>
     </div>
 </div>
+<?php endif; ?>
 
 <footer class="footer">
     <p>D' Fiordaliza Style • Santiago, RD</p>
