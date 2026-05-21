@@ -40,5 +40,3 @@ if ($ssl === 'true') {
 
 // Aceptar ñ, tildes, emojis, etc.
 mysqli_set_charset($conexion, "utf8mb4");
-?>
-
