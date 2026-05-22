@@ -3,7 +3,7 @@
 $host = getenv('DB_HOST') ?: "gateway01.us-west-2.prod.aws.tidbcloud.com";
 $user = getenv('DB_USER') ?: "351mPUWT2NFWfge.root";
 $pass = getenv('DB_PASSWORD') ?: "romPt5SdhjQhKSLf";
-$db   = getenv('DB_NAME') ?: "fiordaliza";
+$db = getenv('DB_NAME') ?: "if0_41790423_fiordaliza";
 $port = getenv('DB_PORT') ?: 4000;
 $ssl  = getenv('DB_SSL') ?: (strpos($host, 'tidbcloud.com') !== false ? 'true' : 'false');
 

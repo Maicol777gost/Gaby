@@ -35,8 +35,8 @@ try {
 
     // 4. Verificar si el admin ya existe
     $check = $db->prepare("SELECT id_usuario, rol FROM usuarios WHERE email = ?");
-    $check->bind_param("s", $email_admin);
     $email_admin = 'admin@fiordaliza.com';
+    $check->bind_param("s", $email_admin);
     $check->execute();
     $res = $check->get_result();
 
