@@ -1,10 +1,9 @@
 <?php
-// Obtener variables de entorno (útil para Render) o usar valores por defecto (InfinityFree)
-$host = getenv('DB_HOST') ?: "gateway01.us-west-2.prod.aws.tidbcloud.com";
-$user = getenv('DB_USER') ?: "351mPUWT2NFWfge.root";
-$pass = getenv('DB_PASSWORD') ?: "romPt5SdhjQhKSLf";
-$db = getenv('DB_NAME') ?: "if0_41790423_fiordaliza";
-$port = getenv('DB_PORT') ?: 4000;
+$host = "gateway01.us-west-2.prod.aws.tidbcloud.com";
+$user = "351mPUWT2NFWfge.root";
+$pass = "Icxq0hu6rg9NAYgu"; // Esta es la nueva contraseña que pusiste
+$db   = "fiordaliza";      // Este es el nombre exacto de la base de datos
+$port = 4000;
 $ssl  = getenv('DB_SSL') ?: (strpos($host, 'tidbcloud.com') !== false ? 'true' : 'false');
 
 if ($ssl === 'true') {
